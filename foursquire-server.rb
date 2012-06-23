@@ -6,5 +6,6 @@ end
 
 post '/checkin' do
 	# Handle Foursquare checkins as they arrive
-	puts request.body
+	request.body.rewind
+	logger.info request.body.read
 end
