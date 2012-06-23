@@ -1,0 +1,1 @@
+web: bundle exec ruby foursquire-server.rb -p $PORT
