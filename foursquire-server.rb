@@ -157,7 +157,7 @@ post '/challenge' do
 	Usergrid.put "/users/#{cr["uuid"]}", :body => challenge.to_json										 			 
 	Usergrid.put "/users/#{ce["uuid"]}", :body => challenge.to_json
 	
-	UrbanAirship.post '/', :body => { 						"aps" => { "badge": "+1", "alert" => "Get to #{venue['name']} quick!"},
+	UrbanAirship.post '/', :body => { 						"aps" => { "badge" => "+1", "alert" => "Get to #{venue['name']} quick!"},
 																			"device_tokens" => [cr["ios"]["device_token"], ce["ios"]["device_token"]]}.to_json
 
 	challenge.to_json
