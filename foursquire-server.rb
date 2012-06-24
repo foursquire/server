@@ -53,8 +53,17 @@ post '/checkin' do
 
 	request.body.rewind
 	checkin = JSON.parse URI.decode request.body.read.split('checkin=').last.split('&user').first
-	logger.info checkin["venue"]["location"]["lat"].to_s + ' / ' + checkin["venue"]["location"]["lng"].to_s
+	user 		= JSON.parse URI.decode request.body.read.split('&user=').last.split('&secret').first
+	# logger.info checkin["venue"]["location"]["lat"].to_s + ' / ' + checkin["venue"]["location"]["lng"].to_s
 
-	Usergrid.put "/users", :query => { 'ql' => "fq.id='#{fq_id}'" }, :body => { 'location' => { 'latitude' => checkin["venue"]["location"]["lat"], 'longitude' => checkin["venue"]["location"]["lng"] } }.to_json
+
+	Usergrid.put "/users", :query => { 'ql' => "fq.id='#{user["id"]}'" }, :body => { 'location' => { 'latitude' => checkin["venue"]["location"]["lat"], 'longitude' => checkin["venue"]["location"]["lng"] } }.to_json
 	#PUT /users?ql=fq.id=thatID {location:{latitute: lat , longitude: lng}}
+end
+
+post '/challenge' do
+	request.body.rewind
+
+	challenge = JSON.parse request.body.read
+
 end
