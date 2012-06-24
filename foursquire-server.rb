@@ -35,8 +35,20 @@ get '/login/:token' do
 
 	# Receive the JSON, store the request.body => response.user.id
 	fq_user = fq_response.parsed_response["response"]["user"]; fq_id = fq_user["id"]
-	location = fq_user["checkins"]["items"][0]["venue"]["location"]
-	epoch = fq_user["checkins"]["items"][0]["createdAt"]
+	begin
+		location = fq_user["checkins"]["items"][0]["venue"]["location"]
+		epoch = fq_user["checkins"]["items"][0]["createdAt"]
+	rescue
+		// Maybe the user doesn’t have checkins yet.
+	end
+
+	name = fq_user["firstName"]; name += ' ' + fq_user["lastName"] unless fq_user["lastName"].nil?
+
+	if location && epoch
+		loc = {  'latitude' => location["lat"],
+						'longitude' => location["lng"],
+							'updated' => epoch }
+	end
 
 	# Query Usergrid /users/?ql=fq.id%3D=thatID
 	ug_response = Usergrid.get '/users', :query => { 'ql' => "fq.id='#{fq_id}'" } 
@@ -46,12 +58,11 @@ get '/login/:token' do
 		# If no results
 		logger.info "that user doesn't exist yet"
 		#Usergrid.delete "/users/fq_#{fq_id}"
+
 		response = Usergrid.post '/users', :body => {	'username' => "fq_#{fq_id}",
 																										' email' => fq_user["contact"]["email"],
-																									'location' => {  'latitude' => location["lat"],
-																																	'longitude' => location["lng"],
-																																	  'updated' => epoch},
-																											'name' => fq_user["firstName"] + ' ' + fq_user["lastName"],
+																									'location' => loc,
+																											'name' => name,
 																									 'picture' => 'https://is0.4sqi.net/userpix_thumbs' + fq_user["photo"]["suffix"],
 																									      'fq' => fq_user }.to_json
 
@@ -62,12 +73,10 @@ get '/login/:token' do
 		logger.info "Found a user!"
 		#PUT /users/UUID I received from the query above { fq: the whole response.user }
 		response = Usergrid.put "/users", :query => { 'ql' => "fq.id='#{fq_id}'" },
-																			:body  => { 'fq' => fq_user,
-																									'location' => {  'latitude' => location["lat"],
-																																	'longitude' => location["lng"],
-																																	  'updated' => epoch },
-																								'name' => fq_user["firstName"] + ' ' + fq_user["lastName"],
-																						 'picture' => 'https://is0.4sqi.net/userpix_thumbs' + fq_user["photo"]["suffix"]
+																			:body  => { 			'fq' => fq_user,
+																									'location' => loc,
+																											'name' => name,
+																						 			 'picture' => 'https://is0.4sqi.net/userpix_thumbs' + fq_user["photo"]["suffix"]
 																								}.to_json
 
 		"Updated an existing user"
@@ -158,7 +167,7 @@ post '/challenge' do
 	Usergrid.put "/users/#{ce["uuid"]}", :body => challenge.to_json
 	
 	UrbanAirship.post '/', :body => { 						"aps" => { "badge" => "+1", "alert" => "Get to #{venue['name']} quick!"},
-																			"device_tokens" => [cr["ios"]["device_token"], ce["ios"]["device_token"]]}.to_json
+																			"device_tokens" => [cr["ios"]["deviceToken"], ce["ios"]["deviceToken"]]}.to_json
 
 	challenge.to_json
 		 			 
