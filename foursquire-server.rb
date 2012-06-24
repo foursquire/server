@@ -110,15 +110,40 @@ get '/callback' do
 end
 
 post '/challenge' do
-	# request.body.rewind
-	# challenge = JSON.parse request.body.read
+	request.body.rewind
+	req = JSON.parse request.body.read
 
-	# challenger = Usergrid.get('/users', , :query => { 'ql' => "fq.id='#{challenge["challenger"]}'" }).parsed_response["entities"][0]
-	# challengee = Usergrid.get('/users', , :query => { 'ql' => "fq.id='#{challenge["challengee"]}'" }).parsed_response["entities"][0]
+	cr = Usergrid.get('/users', :query => { 'ql' => "fq.id='#{req["cr"]}'" }).parsed_response["entities"][0]
+	ce = Usergrid.get('/users', :query => { 'ql' => "fq.id='#{req["ce"]}'" }).parsed_response["entities"][0]
 
-	# alpha = Math.sqrt( 	(challenger["location"]["longitude"] - challengee["location"]["longitude"])**2
-	# 									+ (challenger["location"]["latitude"]  - challengee["location"]["latitude"] )**2 ) / 2
+	lngs = []; lats = []
+	lngs << cr["location"]["longitude"]
+	lats << cr["location"]["latitude"]
+	lngs << ce["location"]["longitude"]
+	lats << ce["location"]["latitude"]
+	lngs = lngs.sort; lats = lats.sort
+
+	# alpha = Math.sqrt( 	(cr["location"]["longitude"] - ce["location"]["longitude"])**2
+	# 									+ (cr["location"]["latitude"]  - ce["location"]["latitude"] )**2 ) / 2
 
 	# beta = 1.5*alpha
+	# gamma = Math.sqrt( alpha**2 + beta**2 )
 
+	# r = Math.sqrt( gamma**2 - a**2 - 2
+
+	r = "%.9f" % Random.new.rand(lngs[0]..lngs[1])
+	s = "%.9f" % Random.new.rand(lats[0]..lats[1])
+
+	logger.info "https://api.foursquare.com/v2/venues/explore?ll=#{s},#{r}&section=food&limit=1&v=20120623&oauth_token=2MMPMOHJNRS53IE44MH545KKD0LVDHWSCQCF4FZ31032GC3E"
+
+	venue = HTTParty.get("https://api.foursquare.com/v2/venues/explore?ll=#{s},#{r}&section=food&limit=1&v=20120623&oauth_token=2MMPMOHJNRS53IE44MH545KKD0LVDHWSCQCF4FZ31032GC3E").parsed_response["response"]["groups"][0]["items"][0]["venue"]
+
+	challenge = { 'challenge' => { 		'venue_id' => venue["id"],
+																	'venue_name' => venue["name"],
+														  					'city' => venue["location"]["city"],
+																		'latitude' => venue["location"]["lat"],
+														 			 'longitude' => venue["location"]["lng"]	}	}
+	Usergrid.put "/users/#{cr["uuid"]}", :body => challenge.to_json										 			 
+	Usergrid.put "/users/#{ce["uuid"]}", :body => challenge.to_json
+	challenge.to_json			 			 
 end
