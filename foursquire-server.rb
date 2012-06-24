@@ -26,6 +26,7 @@ get '/login/:token' do
 	# Receive the JSON, store the request.body => response.user.id
 	fq_user = fq_response.parsed_response["response"]["user"]; fq_id = fq_user["id"]
 	location = fq_user["checkins"]["items"][0]["venue"]["location"]
+	epoch = fq_user["checkins"]["items"][0]["createdAt"]
 
 	# Query Usergrid /users/?ql=fq.id%3D=thatID
 	ug_response = Usergrid.get '/users', :query => { 'ql' => "fq.id='#{fq_id}'" } 
@@ -38,7 +39,8 @@ get '/login/:token' do
 		response = Usergrid.post '/users', :body => { 'username' => "fq_#{fq_id}",
 																									'email' => fq_user["contact"]["email"],
 																									'location' => {  'latitude' => location["lat"],
-																																	'longitude' => location["lng"] },
+																																	'longitude' => location["lng"],
+																																	  'updated' => epoch},
 																									'fq' => fq_user }.to_json
 
 		"Created a new user"
@@ -50,7 +52,8 @@ get '/login/:token' do
 		response = Usergrid.put "/users", :query => { 'ql' => "fq.id='#{fq_id}'" },
 																			:body  => { 'fq' => fq_user,
 																									'location' => {  'latitude' => location["lat"],
-																																	'longitude' => location["lng"] } 
+																																	'longitude' => location["lng"],
+																																	  'updated' => epoch } 
 																								}.to_json
 
 		"Updated an existing user"
@@ -67,7 +70,11 @@ post '/checkin' do
 	# logger.info checkin["venue"]["location"]["lat"].to_s + ' / ' + checkin["venue"]["location"]["lng"].to_s
 
 
-	Usergrid.put "/users", :query => { 'ql' => "fq.id='#{user["id"]}'" }, :body => { 'location' => { 'latitude' => checkin["venue"]["location"]["lat"], 'longitude' => checkin["venue"]["location"]["lng"] } }.to_json
+	Usergrid.put "/users", :query => 	{ 'ql' => "fq.id='#{user["id"]}'" },
+													:body => 	{ 'location' => {	 'latitude' => checkin["venue"]["location"]["lat"],
+																											'longitude' => checkin["venue"]["location"]["lng"],
+																												'updated' => checkin["createdAt"] }
+																		}.to_json
 	#PUT /users?ql=fq.id=thatID {location:{latitute: lat , longitude: lng}}
 end
 
