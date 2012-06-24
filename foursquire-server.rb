@@ -35,12 +35,16 @@ get '/login/:token' do
 		logger.info "that user doesn't exist yet"
 		Usergrid.delete "/users/fq_#{fq_id}"
 		response = Usergrid.post '/users', :body => { 'username' => "fq_#{fq_id}", 'email' => fq_user["contact"]["email"], 'fq' => fq_user }.to_json
+
+		"Create a new user"
 		#POST /users { username: fq_thatID, fq: the whole response.user, email: response.user.contact.email}
 	else
 		# If results
 		logger.info "Found a user!"
 		#PUT /users/UUID I received from the query above { fq: the whole response.user }
 		response = Usergrid.put "/users/fq_#{fq_id}", :body => { 'fq' => fq_user }.to_json
+
+		"Update an existing user"
 	end
 end
 
