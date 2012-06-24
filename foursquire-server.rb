@@ -25,6 +25,7 @@ get '/login/:token' do
 
 	# Receive the JSON, store the request.body => response.user.id
 	fq_user = fq_response.parsed_response["response"]["user"]; fq_id = fq_user["id"]
+	location = fq_user["checkins"]["items"][0]["venue"]["location"]
 
 	# Query Usergrid /users/?ql=fq.id%3D=thatID
 	ug_response = Usergrid.get '/users', :query => { 'ql' => "fq.id='#{fq_id}'" } 
@@ -34,7 +35,11 @@ get '/login/:token' do
 		# If no results
 		logger.info "that user doesn't exist yet"
 		Usergrid.delete "/users/fq_#{fq_id}"
-		response = Usergrid.post '/users', :body => { 'username' => "fq_#{fq_id}", 'email' => fq_user["contact"]["email"], 'fq' => fq_user }.to_json
+		response = Usergrid.post '/users', :body => { 'username' => "fq_#{fq_id}",
+																									'email' => fq_user["contact"]["email"],
+																									'location' => {  'latitude' => location["lat"],
+																																	'longitude' => location["lng"] },
+																									'fq' => fq_user }.to_json
 
 		"Created a new user"
 		#POST /users { username: fq_thatID, fq: the whole response.user, email: response.user.contact.email}
@@ -42,7 +47,11 @@ get '/login/:token' do
 		# If results
 		logger.info "Found a user!"
 		#PUT /users/UUID I received from the query above { fq: the whole response.user }
-		response = Usergrid.put "/users", :query => { 'ql' => "fq.id='#{fq_id}'" }, :body => { 'fq' => fq_user }.to_json
+		response = Usergrid.put "/users", :query => { 'ql' => "fq.id='#{fq_id}'" },
+																			:body  => { 'fq' => fq_user,
+																									'location' => {  'latitude' => location["lat"],
+																																	'longitude' => location["lng"] } 
+																								}.to_json
 
 		"Updated an existing user"
 	end
