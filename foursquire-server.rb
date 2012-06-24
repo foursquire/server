@@ -105,9 +105,20 @@ post '/checkin' do
 	#PUT /users?ql=fq.id=thatID {location:{latitute: lat , longitude: lng}}
 end
 
-post '/challenge' do
-	request.body.rewind
+get '/callback' do
+	"    "
+end
 
-	challenge = JSON.parse request.body.read
+post '/challenge' do
+	# request.body.rewind
+	# challenge = JSON.parse request.body.read
+
+	# challenger = Usergrid.get('/users', , :query => { 'ql' => "fq.id='#{challenge["challenger"]}'" }).parsed_response["entities"][0]
+	# challengee = Usergrid.get('/users', , :query => { 'ql' => "fq.id='#{challenge["challengee"]}'" }).parsed_response["entities"][0]
+
+	# alpha = Math.sqrt( 	(challenger["location"]["longitude"] - challengee["location"]["longitude"])**2
+	# 									+ (challenger["location"]["latitude"]  - challengee["location"]["latitude"] )**2 ) / 2
+
+	# beta = 1.5*alpha
 
 end
