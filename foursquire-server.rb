@@ -36,15 +36,15 @@ get '/login/:token' do
 		Usergrid.delete "/users/fq_#{fq_id}"
 		response = Usergrid.post '/users', :body => { 'username' => "fq_#{fq_id}", 'email' => fq_user["contact"]["email"], 'fq' => fq_user }.to_json
 
-		"Create a new user"
+		"Created a new user"
 		#POST /users { username: fq_thatID, fq: the whole response.user, email: response.user.contact.email}
 	else
 		# If results
 		logger.info "Found a user!"
 		#PUT /users/UUID I received from the query above { fq: the whole response.user }
-		response = Usergrid.put "/users/fq_#{fq_id}", :body => { 'fq' => fq_user }.to_json
+		response = Usergrid.put "/users", :query => { 'ql' => "fq.id='#{fq_id}'" }, :body => { 'fq' => fq_user }.to_json
 
-		"Update an existing user"
+		"Updated an existing user"
 	end
 end
 
@@ -55,6 +55,6 @@ post '/checkin' do
 	checkin = JSON.parse URI.decode request.body.read.split('checkin=').last.split('&user').first
 	logger.info checkin["venue"]["location"]["lat"].to_s + ' / ' + checkin["venue"]["location"]["lng"].to_s
 
-	Usergrid.put "/users/fq_#{fq_id}", :body => { 'location' => { 'latitude' => checkin["venue"]["location"]["lat"], 'longitude' => checkin["venue"]["location"]["lng"] } }.to_json
+	Usergrid.put "/users", :query => { 'ql' => "fq.id='#{fq_id}'" }, :body => { 'location' => { 'latitude' => checkin["venue"]["location"]["lat"], 'longitude' => checkin["venue"]["location"]["lng"] } }.to_json
 	#PUT /users?ql=fq.id=thatID {location:{latitute: lat , longitude: lng}}
 end
