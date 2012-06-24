@@ -96,7 +96,7 @@ get '/login/:token' do
 	end
 
 	content_type "application/json"
-	response
+	response.body
 end
 
 post '/checkin' do
