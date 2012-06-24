@@ -39,7 +39,7 @@ get '/login/:token' do
 		location = fq_user["checkins"]["items"][0]["venue"]["location"]
 		epoch = fq_user["checkins"]["items"][0]["createdAt"]
 	rescue
-		// Maybe the user doesn’t have checkins yet.
+		# Maybe the user doesn’t have checkins yet.
 	end
 
 	name = fq_user["firstName"]; name += ' ' + fq_user["lastName"] unless fq_user["lastName"].nil?
