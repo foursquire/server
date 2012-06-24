@@ -4,7 +4,7 @@ require 'json/ext'
 require 'httparty'
 
 get '/' do
-  "Hello, world"
+  ENV['HOST']
 end
 
 class Usergrid
@@ -36,12 +36,14 @@ get '/login/:token' do
 		# If no results
 		logger.info "that user doesn't exist yet"
 		Usergrid.delete "/users/fq_#{fq_id}"
-		response = Usergrid.post '/users', :body => { 'username' => "fq_#{fq_id}",
-																									'email' => fq_user["contact"]["email"],
+		response = Usergrid.post '/users', :body => {	'username' => "fq_#{fq_id}",
+																										' email' => fq_user["contact"]["email"],
 																									'location' => {  'latitude' => location["lat"],
 																																	'longitude' => location["lng"],
 																																	  'updated' => epoch},
-																									'fq' => fq_user }.to_json
+																											'name' => fq_user["firstName"] + ' ' + fq_user["lastName"],
+																									 'picture' => 'https://is0.4sqi.net/userpix_thumbs' + fq_user["photo"]["suffix"],
+																									      'fq' => fq_user }.to_json
 
 		"Created a new user"
 		#POST /users { username: fq_thatID, fq: the whole response.user, email: response.user.contact.email}
@@ -53,11 +55,36 @@ get '/login/:token' do
 																			:body  => { 'fq' => fq_user,
 																									'location' => {  'latitude' => location["lat"],
 																																	'longitude' => location["lng"],
-																																	  'updated' => epoch } 
+																																	  'updated' => epoch },
+																								'name' => fq_user["firstName"] + ' ' + fq_user["lastName"],
+																						 'picture' => 'https://is0.4sqi.net/userpix_thumbs' + fq_user["photo"]["suffix"]
 																								}.to_json
 
 		"Updated an existing user"
 	end
+
+	if ENV['HOST'] == 'localhost' # Get recent checkins from friends to populate the Usergrid graph
+		recents = HTTParty.get("https://api.foursquare.com/v2/checkins/recent?oauth_token=#{token}&v=20120623").parsed_response["response"]["recent"]
+		friends = []
+		ids_seen = []
+		recents.each do |recent|
+			next if ids_seen.include? recent["user"]["id"]
+			begin
+				Usergrid.post '/users', :body => {	'username' => "fq_#{recent["user"]["id"]}",
+																						'location' => {  'latitude' => recent["venue"]["location"]["lat"],
+																														'longitude' => recent["venue"]["location"]["lng"],
+												 																			'updated' => recent["createdAt"]},
+																								'name' => recent["user"]["firstName"] + ' ' + recent["user"]["lastName"],
+																						 'picture' => 'https://is0.4sqi.net/userpix_thumbs' + recent["user"]["photo"]["suffix"],
+																									'fq' => recent["user"] }.to_json
+			rescue TypeError
+				logger.error "A friend creation failed"
+			ensure
+				ids_seen << recent["user"]["id"]
+			end
+		end
+	end
+
 end
 
 post '/checkin' do
