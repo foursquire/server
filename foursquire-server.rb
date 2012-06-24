@@ -9,7 +9,7 @@ end
 
 class Usergrid
   include HTTParty
-  base_uri 'https://api.usergrid.com/Foursquire/foursquire'
+  base_uri 'https://usergrid-prod-api-v2.elasticbeanstalk.com/Foursquire/foursquire'
   debug_output $stderr
   #default_params :output => 'json'
   format :json
@@ -53,6 +53,7 @@ post '/checkin' do
 
 	request.body.rewind
 	checkin = JSON.parse URI.decode request.body.read.split('checkin=').last.split('&user').first
+	request.body.rewind
 	user 		= JSON.parse URI.decode request.body.read.split('&user=').last.split('&secret').first
 	# logger.info checkin["venue"]["location"]["lat"].to_s + ' / ' + checkin["venue"]["location"]["lng"].to_s
 
