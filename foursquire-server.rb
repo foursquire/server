@@ -16,6 +16,16 @@ class Usergrid
   headers "Content-Type" => "application/json"
 end
 
+class UrbanAirship
+  include HTTParty
+  basic_auth ENV['UA_KEY'], ENV['UA_MASTER_SECRET']
+  base_uri 'https://go.urbanairship.com/api/push/'
+  debug_output $stderr
+  #default_params :output => 'json'
+  format :json
+  headers "Content-Type" => "application/json"
+end
+
 get '/login/:token' do
 	# Receive a token as a query string 
 	token = params[:token]
@@ -134,9 +144,8 @@ post '/challenge' do
 	r = "%.9f" % Random.new.rand(lngs[0]..lngs[1])
 	s = "%.9f" % Random.new.rand(lats[0]..lats[1])
 
-	logger.info "https://api.foursquare.com/v2/venues/explore?ll=#{s},#{r}&section=food&limit=1&v=20120623&oauth_token=2MMPMOHJNRS53IE44MH545KKD0LVDHWSCQCF4FZ31032GC3E"
 
-	venue = HTTParty.get("https://api.foursquare.com/v2/venues/explore?ll=#{s},#{r}&section=food&limit=1&v=20120623&oauth_token=2MMPMOHJNRS53IE44MH545KKD0LVDHWSCQCF4FZ31032GC3E").parsed_response["response"]["groups"][0]["items"][0]["venue"]
+	venue = HTTParty.get("https://api.foursquare.com/v2/venues/explore?ll=#{s},#{r}&section=food&limit=1&v=20120623&oauth_token=#{ENV['FQ_TOKEN']}").parsed_response["response"]["groups"][0]["items"][0]["venue"]
 
 	challenge = { 'challenge' => { 		'venue_id' => venue["id"],
 																	'venue_name' => venue["name"],
@@ -145,5 +154,9 @@ post '/challenge' do
 														 			 'longitude' => venue["location"]["lng"]	}	}
 	Usergrid.put "/users/#{cr["uuid"]}", :body => challenge.to_json										 			 
 	Usergrid.put "/users/#{ce["uuid"]}", :body => challenge.to_json
-	challenge.to_json			 			 
+	
+	UrbanAirship.post '/', :body => { "aps" => {"alert" => "Get to #{venue['name']} quick!"}, "device_tokens" => ["3099C01A96CB4AADD80B4CA20A2B716EB09369B63FEE41F2520D654A50C377AD"]}.to_json
+
+	challenge.to_json
+		 			 
 end
