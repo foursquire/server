@@ -9,7 +9,7 @@ end
 
 class Usergrid
   include HTTParty
-  base_uri 'https://usergrid-prod-api-v2.elasticbeanstalk.com/Foursquire/foursquire'
+  base_uri 'https://usergrid-prod-api-v2.elasticbeanstalk.com/Foursquire/foursquire2'
   debug_output $stderr
   #default_params :output => 'json'
   format :json
