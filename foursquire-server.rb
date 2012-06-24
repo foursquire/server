@@ -45,7 +45,7 @@ get '/login/:token' do
 	if ug_response.parsed_response["entities"].empty?
 		# If no results
 		logger.info "that user doesn't exist yet"
-		Usergrid.delete "/users/fq_#{fq_id}"
+		#Usergrid.delete "/users/fq_#{fq_id}"
 		response = Usergrid.post '/users', :body => {	'username' => "fq_#{fq_id}",
 																										' email' => fq_user["contact"]["email"],
 																									'location' => {  'latitude' => location["lat"],
@@ -95,6 +95,8 @@ get '/login/:token' do
 		end
 	end
 
+	content_type "application/json"
+	response
 end
 
 post '/checkin' do
@@ -116,7 +118,7 @@ post '/checkin' do
 end
 
 get '/callback' do
-	"    "
+	"All set! You can click the \"Done\" button below."
 end
 
 post '/challenge' do
